@@ -1,4 +1,4 @@
-# Kubespray 离线部署工具
+# Kubespray 离线文件/镜像构建
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/sgfoot/kubespray-files)](https://hub.docker.com/r/sgfoot/kubespray-files)
 [![GitHub](https://img.shields.io/github/license/sgfoot/kubespray-offline)](LICENSE)

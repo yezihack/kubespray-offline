@@ -302,15 +302,44 @@ jobs:
           ARG TARGETARCH
           COPY registry-data-${TARGETARCH} /var/lib/registry
 
+          # Create registry config
+          RUN mkdir -p /etc/docker/registry && \
+              cat > /etc/docker/registry/config.yml << 'CONFIG_EOF'
+          version: 0.1
+          log:
+            fields:
+              service: registry
+          storage:
+            cache:
+              blobdescriptor: inmemory
+            filesystem:
+              rootdirectory: /var/lib/registry
+          http:
+            addr: :5000
+            headers:
+              X-Content-Type-Options: [nosniff]
+          health:
+            storagedriver:
+              enabled: true
+              interval: 10s
+              threshold: 3
+          CONFIG_EOF
+
           # Create startup script
           RUN cat > /docker-entrypoint.sh << 'SCRIPT_EOF'
           #!/bin/sh
           set -e
           
-          echo "Starting registry with pre-loaded images..."
+          echo "=========================================="
+          echo "Kubespray Offline Registry"
+          echo "=========================================="
           echo "Architecture: $(uname -m)"
-          echo "Images are available at hub.kubespray.local:5000"
-          echo "Use: curl http://hub.kubespray.local:5000/v2/_catalog"
+          echo "Registry: hub.kubespray.local:5000"
+          echo ""
+          echo "Usage:"
+          echo "  List images: curl http://hub.kubespray.local:5000/v2/_catalog"
+          echo "  Pull image:  docker pull hub.kubespray.local:5000/k8s/pause:3.9"
+          echo "=========================================="
           
           exec /entrypoint.sh "$@"
           SCRIPT_EOF
