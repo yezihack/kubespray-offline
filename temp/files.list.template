@@ -1,0 +1,23 @@
+{{ dl_k8s_io_url }}/release/{{ kube_version }}/bin/linux/{{ image_arch }}/kubelet
+{{ dl_k8s_io_url }}/release/{{ kube_version }}/bin/linux/{{ image_arch }}/kubectl
+{{ dl_k8s_io_url }}/release/{{ kubeadm_version }}/bin/linux/{{ image_arch }}/kubeadm
+{{ github_url }}/etcd-io/etcd/releases/download/{{ etcd_version }}/etcd-{{ etcd_version }}-linux-{{ image_arch }}.tar.gz
+{{ github_url }}/containernetworking/plugins/releases/download/{{ cni_version }}/cni-plugins-linux-{{ image_arch }}-{{ cni_version }}.tgz
+{{ github_url }}/projectcalico/calico/releases/download/{{ calico_ctl_version }}/calicoctl-linux-{{ image_arch }}
+{{ github_url }}/projectcalico/calico/archive/{{ calico_version }}.tar.gz
+{{ github_url }}/cilium/cilium-cli/releases/download/{{ cilium_cli_version }}/cilium-linux-{{ image_arch }}.tar.gz
+{{ github_url }}/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-{{ ansible_system | lower }}-{{ image_arch }}.tar.gz
+{{ storage_googleapis_url }}/cri-o/artifacts/cri-o.{{ image_arch }}.{{ crio_version }}.tar.gz
+{{ get_helm_url }}/helm-{{ helm_version }}-linux-{{ image_arch }}.tar.gz
+{{ github_url }}/opencontainers/runc/releases/download/{{ runc_version }}/runc.{{ image_arch }}
+{{ github_url }}/containers/crun/releases/download/{{ crun_version }}/crun-{{ crun_version }}-linux-{{ image_arch }}
+{{ github_url }}/containers/youki/releases/download/v{{ youki_version }}/youki_{{ youki_version | regex_replace('\\.', '_') }}_linux.tar.gz
+{{ github_url }}/kata-containers/kata-containers/releases/download/{{ kata_containers_version }}/kata-static-{{ kata_containers_version }}-{{ ansible_architecture }}.tar.xz
+{{ storage_googleapis_url }}/gvisor/releases/release/{{ gvisor_version }}/{{ ansible_architecture }}/runsc
+{{ storage_googleapis_url }}/gvisor/releases/release/{{ gvisor_version }}/{{ ansible_architecture }}/containerd-shim-runsc-v1
+{{ github_url }}/containerd/nerdctl/releases/download/v{{ nerdctl_version }}/nerdctl-{{ nerdctl_version }}-{{ ansible_system | lower }}-{{ image_arch }}.tar.gz
+{{ github_url }}/kubernetes-sigs/krew/releases/download/{{ krew_version }}/krew-{{ host_os }}_{{ image_arch }}.tar.gz
+{{ github_url }}/containerd/containerd/releases/download/v{{ containerd_version }}/containerd-{{ containerd_version }}-linux-{{ image_arch }}.tar.gz
+{{ github_url }}/Mirantis/cri-dockerd/releases/download/v{{ cri_dockerd_version }}/cri-dockerd-{{ cri_dockerd_version }}.{{ image_arch }}.tgz
+{{ github_url }}/lework/skopeo-binary/releases/download/{{ skopeo_version }}/skopeo-linux-{{ image_arch }}
+{{ github_url }}/mikefarah/yq/releases/download/{{ yq_version }}/yq_linux_{{ image_arch }}

@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # 离线文件服务器
+  kubespray-files:
+    image: ${DOCKERHUB_USERNAME:-your-username}/kubespray-files:${VERSION:-v0.1.0-2.25.0}
+    container_name: kubespray-files
+    ports:
+      - "${FILES_PORT:-8080}:80"
+    restart: unless-stopped
+    volumes:
+      # 可选：持久化文件数据
+      - files-data:/opt/k8s
+    networks:
+      - kubespray-net
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/k8s/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # 离线镜像仓库
+  kubespray-registry:
+    image: ${DOCKERHUB_USERNAME:-your-username}/kubespray-images:${VERSION:-v0.1.0-2.25.0}
+    container_name: kubespray-registry
+    ports:
+      - "${REGISTRY_PORT:-5000}:5000"
+    restart: unless-stopped
+    volumes:
+      # 持久化镜像数据
+      - registry-data:/var/lib/registry
+      # 挂载证书（如果使用 HTTPS）
+      - ./certs:/certs:ro
+    environment:
+      # HTTPS 配置（可选）
+      - REGISTRY_HTTP_TLS_CERTIFICATE=${TLS_CERT:-/certs/hub.kubespray.local.crt}
+      - REGISTRY_HTTP_TLS_KEY=${TLS_KEY:-/certs/hub.kubespray.local.key}
+      # 日志级别
+      - REGISTRY_LOG_LEVEL=${LOG_LEVEL:-info}
+      # 存储配置
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
+    networks:
+      - kubespray-net
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/v2/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+networks:
+  kubespray-net:
+    driver: bridge
+
+volumes:
+  files-data:
+    driver: local
+  registry-data:
+    driver: local

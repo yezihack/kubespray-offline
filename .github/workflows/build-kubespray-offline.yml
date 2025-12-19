@@ -1,0 +1,196 @@
+name: Build Kubespray Offline Images
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+env:
+  KUBESPRAY_VERSION: "2.25.0"
+  VERSION_PREFIX: "v0.1.0"
+  REGISTRY: docker.io
+  FILES_IMAGE_NAME: kubespray-files
+  IMAGES_IMAGE_NAME: kubespray-images
+
+jobs:
+  build-files:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FILES_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ env.VERSION_PREFIX }}-${{ env.KUBESPRAY_VERSION }}
+            type=raw,value=latest
+
+      - name: Create Dockerfile for files
+        run: |
+          cat > Dockerfile.files << 'EOF'
+          FROM nginx:1.25.2-alpine
+
+          # Install wget
+          RUN apk add --no-cache wget
+
+          # Create directory structure
+          RUN mkdir -p /opt/k8s/k8s
+
+          # Copy files list
+          COPY temp/files.list /tmp/files.list
+
+          # Download files
+          RUN cd /opt/k8s && \
+              wget -x -P k8s -i /tmp/files.list && \
+              rm /tmp/files.list
+
+          # Configure nginx
+          RUN cat > /etc/nginx/conf.d/default.conf << 'NGINX_EOF'
+          server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+              location /k8s/ {
+                  root /opt/k8s;
+                  index index.html index.htm;
+                  autoindex on;
+                  autoindex_exact_size off;
+                  autoindex_localtime on;
+              }
+          }
+          NGINX_EOF
+
+          EXPOSE 80
+
+          CMD ["nginx", "-g", "daemon off;"]
+          EOF
+
+      - name: Build and push files image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.files
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-images:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Install skopeo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y skopeo
+
+      - name: Pull and save images
+        run: |
+          mkdir -p registry-data
+          
+          # Start a local registry
+          docker run -d -p 5000:5000 --name registry \
+            -v $(pwd)/registry-data:/var/lib/registry \
+            registry:3
+          
+          # Wait for registry to be ready
+          sleep 5
+          
+          # Sync images
+          while IFS= read -r image; do
+            if [ -n "$image" ]; then
+              echo "Syncing: $image"
+              repo_name=$(echo "$image" | sed 's|[^/]*/||')
+              skopeo copy --dest-tls-verify=false \
+                "docker://${image}" \
+                "docker://localhost:5000/k8s/${repo_name}" || echo "Failed: $image"
+            fi
+          done < temp/images.list
+          
+          # Stop registry
+          docker stop registry
+          docker rm registry
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGES_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ env.VERSION_PREFIX }}-${{ env.KUBESPRAY_VERSION }}
+            type=raw,value=latest
+
+      - name: Create Dockerfile for images
+        run: |
+          cat > Dockerfile.images << 'EOF'
+          FROM registry:3
+
+          # Copy pre-synced registry data
+          COPY registry-data /var/lib/registry
+
+          # Create startup script
+          RUN cat > /docker-entrypoint.sh << 'SCRIPT_EOF'
+          #!/bin/sh
+          set -e
+          
+          echo "Starting registry with pre-loaded images..."
+          echo "Images are available at hub.kubespray.local:5000"
+          echo "Use: curl http://hub.kubespray.local:5000/v2/_catalog"
+          
+          exec /entrypoint.sh "$@"
+          SCRIPT_EOF
+          
+          RUN chmod +x /docker-entrypoint.sh
+
+          EXPOSE 5000
+
+          ENTRYPOINT ["/docker-entrypoint.sh"]
+          CMD ["/etc/docker/registry/config.yml"]
+          EOF
+
+      - name: Build and push images image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.images
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

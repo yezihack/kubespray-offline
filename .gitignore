@@ -1,0 +1,33 @@
+# Docker build artifacts
+Dockerfile.files
+Dockerfile.images
+sync-images.sh
+entrypoint.sh
+registry-data/
+
+# Environment files
+.env
+
+# Certificates
+*.crt
+*.key
+*.pem
+certs/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.bak
