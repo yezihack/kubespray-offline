@@ -9,24 +9,23 @@
 | 文档 | 描述 | 适合人群 |
 |------|------|----------|
 | [GET_STARTED.md](GET_STARTED.md) | 5 分钟快速开始 | 所有用户 |
-| [QUICKSTART.md](QUICKSTART.md) | 详细的快速开始指南 | 新手用户 |
-| [README.md](README.md) | 项目概述和功能介绍 | 所有用户 |
+| [../QUICKSTART.md](../QUICKSTART.md) | 详细的快速开始指南 | 新手用户 |
+| [../README.md](../README.md) | 项目概述和功能介绍 | 所有用户 |
 
 ### 💻 平台特定指南
 
 | 文档 | 描述 | 适合人群 |
 |------|------|----------|
-| [WINDOWS_GUIDE.md](WINDOWS_GUIDE.md) | Windows 平台使用指南 | Windows 用户 |
-| [QUICKSTART.md](QUICKSTART.md) | Linux/macOS 使用指南 | Linux/macOS 用户 |
+| [../QUICKSTART.md](../QUICKSTART.md) | Linux/macOS/Windows 使用指南 | 所有用户 |
 | [MULTI_ARCH_GUIDE.md](MULTI_ARCH_GUIDE.md) | 多架构支持指南 | ARM64/混合架构用户 |
 
 ### 🔧 配置和使用
 
 | 文档 | 描述 | 适合人群 |
 |------|------|----------|
-| [examples/kubespray-offline-config.yml](examples/kubespray-offline-config.yml) | Kubespray 离线配置示例 | 部署人员 |
-| [docker-compose.yml](docker-compose.yml) | Docker Compose 配置 | 运维人员 |
-| [.env.example](.env.example) | 环境变量配置示例 | 运维人员 |
+| [../examples/kubespray-offline-config.yml](../examples/kubespray-offline-config.yml) | Kubespray 离线配置示例 | 部署人员 |
+| [../docker-compose.yml](../docker-compose.yml) | Docker Compose 配置 | 运维人员 |
+| [../.env.example](../.env.example) | 环境变量配置示例 | 运维人员 |
 
 ### 📚 深入了解
 
@@ -51,10 +50,8 @@
 ### 场景 1: 我是新手，想快速开始
 
 1. 阅读 [GET_STARTED.md](GET_STARTED.md)
-2. 根据你的操作系统:
-   - Windows: 阅读 [WINDOWS_GUIDE.md](WINDOWS_GUIDE.md)
-   - Linux/macOS: 阅读 [QUICKSTART.md](QUICKSTART.md)
-3. 参考 [examples/kubespray-offline-config.yml](examples/kubespray-offline-config.yml) 配置 Kubespray
+2. 阅读 [../QUICKSTART.md](../QUICKSTART.md) 完整指南
+3. 参考 [../examples/kubespray-offline-config.yml](../examples/kubespray-offline-config.yml) 配置 Kubespray
 
 ### 场景 2: 我想了解项目功能
 
