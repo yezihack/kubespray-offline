@@ -33,14 +33,83 @@ RUN mkdir -p /opt/k8s/k8s
 COPY temp/files-amd64.list /tmp/files-amd64.list
 COPY temp/files-arm64.list /tmp/files-arm64.list
 
-# 下载所有架构的文件
-RUN cd /opt/k8s && \
-    echo "=== 下载 AMD64 架构文件 ===" && \
-    wget -x -P k8s -i /tmp/files-amd64.list && \
-    echo "=== 下载 ARM64 架构文件 ===" && \
-    wget -x -P k8s -i /tmp/files-arm64.list && \
-    rm /tmp/files-amd64.list /tmp/files-arm64.list && \
-    echo "=== 文件下载完成 ==="
+# Create download script with error handling
+RUN cat > /tmp/download.sh << 'DOWNLOAD_EOF'
+#!/bin/sh
+set -e
+
+download_file() {
+    local url="$1"
+    local max_retries=3
+    local retry=0
+    
+    echo "Downloading: $url"
+    
+    while [ $retry -lt $max_retries ]; do
+        if wget -x -P k8s --timeout=60 --tries=3 --waitretry=5 "$url"; then
+            echo "✓ Success: $url"
+            return 0
+        else
+            retry=$((retry + 1))
+            echo "⚠ Retry $retry/$max_retries: $url"
+            sleep 5
+        fi
+    done
+    
+    echo "✗ Failed after $max_retries attempts: $url"
+    return 1
+}
+
+cd /opt/k8s
+
+echo "=== Downloading AMD64 architecture files ==="
+failed_files=""
+total_files=0
+success_files=0
+
+while IFS= read -r url; do
+    if [ -n "$url" ] && [ "${url#\#}" = "$url" ]; then
+        total_files=$((total_files + 1))
+        if download_file "$url"; then
+            success_files=$((success_files + 1))
+        else
+            failed_files="$failed_files\n$url"
+        fi
+    fi
+done < /tmp/files-amd64.list
+
+echo "AMD64: $success_files/$total_files files downloaded"
+
+echo "=== Downloading ARM64 architecture files ==="
+total_files=0
+success_files=0
+
+while IFS= read -r url; do
+    if [ -n "$url" ] && [ "${url#\#}" = "$url" ]; then
+        total_files=$((total_files + 1))
+        if download_file "$url"; then
+            success_files=$((success_files + 1))
+        else
+            failed_files="$failed_files\n$url"
+        fi
+    fi
+done < /tmp/files-arm64.list
+
+echo "ARM64: $success_files/$total_files files downloaded"
+
+if [ -n "$failed_files" ]; then
+    echo "=== Failed downloads ==="
+    echo "$failed_files"
+    echo "⚠ Some files failed to download, but continuing..."
+fi
+
+echo "=== Download complete ==="
+DOWNLOAD_EOF
+
+# Make script executable and run it
+RUN chmod +x /tmp/download.sh && \
+    /tmp/download.sh && \
+    rm /tmp/download.sh /tmp/files-amd64.list /tmp/files-arm64.list
 
 # 配置 Nginx
 RUN cat > /etc/nginx/conf.d/default.conf << 'NGINX_EOF'

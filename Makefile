@@ -21,16 +21,14 @@ build-files: ## 构建文件服务器镜像（多架构支持）
 	@echo "构建文件服务器镜像（包含 AMD64 和 ARM64）..."
 	@cat > Dockerfile.files << 'EOF'\n\
 	FROM nginx:1.25.2-alpine\n\
-	RUN apk add --no-cache wget\n\
+	RUN apk add --no-cache wget ca-certificates\n\
 	RUN mkdir -p /opt/k8s/k8s\n\
 	COPY temp/files-amd64.list /tmp/files-amd64.list\n\
 	COPY temp/files-arm64.list /tmp/files-arm64.list\n\
-	RUN cd /opt/k8s && \\\n\
-	    echo "下载 AMD64 架构文件..." && \\\n\
-	    wget -x -P k8s -i /tmp/files-amd64.list && \\\n\
-	    echo "下载 ARM64 架构文件..." && \\\n\
-	    wget -x -P k8s -i /tmp/files-arm64.list && \\\n\
-	    rm /tmp/files-amd64.list /tmp/files-arm64.list\n\
+	RUN cat > /tmp/download.sh << 'DOWNLOAD_EOF' && \\\n\
+	    chmod +x /tmp/download.sh && \\\n\
+	    /tmp/download.sh && \\\n\
+	    rm /tmp/download.sh /tmp/files-amd64.list /tmp/files-arm64.list\n\
 	RUN cat > /etc/nginx/conf.d/default.conf << 'NGINX_EOF'\n\
 	server {\n\
 	    listen 80 default_server;\n\
