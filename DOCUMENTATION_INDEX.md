@@ -18,6 +18,7 @@
 |------|------|----------|
 | [WINDOWS_GUIDE.md](WINDOWS_GUIDE.md) | Windows 平台使用指南 | Windows 用户 |
 | [QUICKSTART.md](QUICKSTART.md) | Linux/macOS 使用指南 | Linux/macOS 用户 |
+| [MULTI_ARCH_GUIDE.md](MULTI_ARCH_GUIDE.md) | 多架构支持指南 | ARM64/混合架构用户 |
 
 ### 🔧 配置和使用
 
@@ -33,8 +34,17 @@
 |------|------|----------|
 | [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) | 项目结构说明 | 开发者 |
 | [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) | 实现细节和技术总结 | 开发者 |
+| [ARCHITECTURE_DESIGN.md](ARCHITECTURE_DESIGN.md) | 多架构支持架构设计 | 开发者/架构师 |
+| [MULTIARCH_FILES_BUILD.md](MULTIARCH_FILES_BUILD.md) | 多架构文件镜像构建指南 | 开发者 |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 贡献指南 | 贡献者 |
 | [CHANGELOG.md](CHANGELOG.md) | 更新日志 | 所有用户 |
+
+### 🐳 Docker Hub 文档
+
+| 文档 | 描述 | 用途 |
+|------|------|------|
+| [DOCKERHUB_OVERVIEW_FILES.md](DOCKERHUB_OVERVIEW_FILES.md) | 文件服务器镜像说明 | Docker Hub Overview |
+| [DOCKERHUB_OVERVIEW_IMAGES.md](DOCKERHUB_OVERVIEW_IMAGES.md) | 镜像仓库说明 | Docker Hub Overview |
 
 ## 📋 按使用场景查找
 

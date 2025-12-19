@@ -12,10 +12,10 @@
 
 ```bash
 # 拉取文件服务器镜像
-docker pull <your-dockerhub-username>/kubespray-files:v0.1.0-2.25.0
+docker pull sgfoot/kubespray-files:v0.1.0-2.25.0
 
 # 拉取镜像仓库
-docker pull <your-dockerhub-username>/kubespray-images:v0.1.0-2.25.0
+docker pull sgfoot/kubespray-images:v0.1.0-2.25.0
 ```
 
 ## 步骤 2: 部署离线服务
@@ -41,7 +41,7 @@ docker run -d \
   -p 8080:80 \
   --restart always \
   --name kubespray-files \
-  <your-dockerhub-username>/kubespray-files:v0.1.0-2.25.0
+  sgfoot/kubespray-files:v0.1.0-2.25.0
 ```
 
 #### 部署镜像仓库
@@ -69,7 +69,7 @@ docker run -d \
   -v /opt/registry/certs:/certs \
   -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/hub.kubespray.local.crt \
   -e REGISTRY_HTTP_TLS_KEY=/certs/hub.kubespray.local.key \
-  <your-dockerhub-username>/kubespray-images:v0.1.0-2.25.0
+  sgfoot/kubespray-images:v0.1.0-2.25.0
 ```
 
 ## 步骤 3: 验证服务
@@ -208,7 +208,7 @@ docker run -d \
   -p 8080:80 \
   -v /data/kubespray-files:/opt/k8s \
   --name kubespray-files \
-  <your-dockerhub-username>/kubespray-files:v0.1.0-2.25.0
+  sgfoot/kubespray-files:v0.1.0-2.25.0
 
 # 持久化镜像仓库数据
 docker run -d \
@@ -218,7 +218,7 @@ docker run -d \
   -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/hub.kubespray.local.crt \
   -e REGISTRY_HTTP_TLS_KEY=/certs/hub.kubespray.local.key \
   --name kubespray-registry \
-  <your-dockerhub-username>/kubespray-images:v0.1.0-2.25.0
+  sgfoot/kubespray-images:v0.1.0-2.25.0
 ```
 
 ### 使用 Docker Compose
@@ -230,7 +230,7 @@ version: '3.8'
 
 services:
   files:
-    image: <your-dockerhub-username>/kubespray-files:v0.1.0-2.25.0
+    image: sgfoot/kubespray-files:v0.1.0-2.25.0
     ports:
       - "8080:80"
     restart: always
@@ -238,7 +238,7 @@ services:
       - files-data:/opt/k8s
 
   registry:
-    image: <your-dockerhub-username>/kubespray-images:v0.1.0-2.25.0
+    image: sgfoot/kubespray-images:v0.1.0-2.25.0
     ports:
       - "5000:5000"
     restart: always

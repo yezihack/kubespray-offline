@@ -26,6 +26,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -45,36 +48,68 @@ jobs:
             type=raw,value=${{ env.VERSION_PREFIX }}-${{ env.KUBESPRAY_VERSION }}
             type=raw,value=latest
 
-      - name: Create Dockerfile for files
+      - name: Verify files lists exist
+        run: |
+          echo "Checking for architecture-specific files lists..."
+          if [ ! -f "temp/files-amd64.list" ]; then
+            echo "Error: temp/files-amd64.list not found"
+            exit 1
+          fi
+          if [ ! -f "temp/files-arm64.list" ]; then
+            echo "Error: temp/files-arm64.list not found"
+            exit 1
+          fi
+          echo "✓ Both files lists found"
+          echo "AMD64 files: $(wc -l < temp/files-amd64.list)"
+          echo "ARM64 files: $(wc -l < temp/files-arm64.list)"
+
+      - name: Create Dockerfile for multi-arch files
         run: |
           cat > Dockerfile.files << 'EOF'
           FROM nginx:1.25.2-alpine
 
-          # Install wget
+          # Install wget for downloading files
           RUN apk add --no-cache wget
 
           # Create directory structure
           RUN mkdir -p /opt/k8s/k8s
 
-          # Copy files list
-          COPY temp/files.list /tmp/files.list
+          # Copy both architecture files lists
+          COPY temp/files-amd64.list /tmp/files-amd64.list
+          COPY temp/files-arm64.list /tmp/files-arm64.list
 
-          # Download files
+          # Download all architecture files
           RUN cd /opt/k8s && \
-              wget -x -P k8s -i /tmp/files.list && \
-              rm /tmp/files.list
+              echo "=== Downloading AMD64 architecture files ===" && \
+              wget -x -P k8s -i /tmp/files-amd64.list && \
+              echo "=== Downloading ARM64 architecture files ===" && \
+              wget -x -P k8s -i /tmp/files-arm64.list && \
+              rm /tmp/files-amd64.list /tmp/files-arm64.list && \
+              echo "=== All files downloaded successfully ==="
 
-          # Configure nginx
+          # Configure nginx with directory listing
           RUN cat > /etc/nginx/conf.d/default.conf << 'NGINX_EOF'
           server {
               listen 80 default_server;
               listen [::]:80 default_server;
+              
               location /k8s/ {
                   root /opt/k8s;
                   index index.html index.htm;
                   autoindex on;
                   autoindex_exact_size off;
                   autoindex_localtime on;
+              }
+              
+              location /health {
+                  access_log off;
+                  return 200 "healthy\n";
+                  add_header Content-Type text/plain;
+              }
+              location / {
+                  access_log off;
+                  return 200 "Hi Kubespray Files here\n";
+                  add_header Content-Type text/plain;
               }
           }
           NGINX_EOF
@@ -84,26 +119,55 @@ jobs:
           CMD ["nginx", "-g", "daemon off;"]
           EOF
 
-      - name: Build and push files image
+      - name: Build and push multi-arch files image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile.files
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=files-multiarch
+          cache-to: type=gha,mode=max,scope=files-multiarch
+
+      - name: Verify image
+        run: |
+          echo "=== Verifying built image ==="
+          docker pull ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FILES_IMAGE_NAME }}:${{ env.VERSION_PREFIX }}-${{ env.KUBESPRAY_VERSION }}
+          
+          echo "=== Testing image ==="
+          docker run -d --name test-files -p 8080:80 \
+            ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FILES_IMAGE_NAME }}:${{ env.VERSION_PREFIX }}-${{ env.KUBESPRAY_VERSION }}
+          
+          sleep 5
+          
+          echo "=== Checking AMD64 files ==="
+          curl -f http://localhost:8080/k8s/dl.k8s.io/release/v1.29.10/bin/linux/amd64/ || echo "AMD64 path check failed"
+          
+          echo "=== Checking ARM64 files ==="
+          curl -f http://localhost:8080/k8s/dl.k8s.io/release/v1.29.10/bin/linux/arm64/ || echo "ARM64 path check failed"
+          
+          docker stop test-files
+          docker rm test-files
+          
+          echo "✓ Image verification complete"
 
   build-images:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -120,24 +184,28 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y skopeo
 
-      - name: Pull and save images
+      - name: Pull and save images for architecture
         run: |
-          mkdir -p registry-data
+          mkdir -p registry-data-${{ matrix.arch }}
           
           # Start a local registry
           docker run -d -p 5000:5000 --name registry \
-            -v $(pwd)/registry-data:/var/lib/registry \
+            -v $(pwd)/registry-data-${{ matrix.arch }}:/var/lib/registry \
             registry:3
           
           # Wait for registry to be ready
           sleep 5
           
-          # Sync images
+          # Sync images with architecture filter
           while IFS= read -r image; do
             if [ -n "$image" ]; then
-              echo "Syncing: $image"
+              echo "Syncing: $image for ${{ matrix.arch }}"
               repo_name=$(echo "$image" | sed 's|[^/]*/||')
+              
+              # Copy with architecture override
               skopeo copy --dest-tls-verify=false \
+                --override-arch ${{ matrix.arch }} \
+                --override-os linux \
                 "docker://${image}" \
                 "docker://localhost:5000/k8s/${repo_name}" || echo "Failed: $image"
             fi
@@ -153,8 +221,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGES_IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ env.VERSION_PREFIX }}-${{ env.KUBESPRAY_VERSION }}
-            type=raw,value=latest
+            type=raw,value=${{ env.VERSION_PREFIX }}-${{ env.KUBESPRAY_VERSION }}-${{ matrix.arch }}
+            type=raw,value=latest-${{ matrix.arch }}
 
       - name: Create Dockerfile for images
         run: |
@@ -162,7 +230,8 @@ jobs:
           FROM registry:3
 
           # Copy pre-synced registry data
-          COPY registry-data /var/lib/registry
+          ARG TARGETARCH
+          COPY registry-data-${TARGETARCH} /var/lib/registry
 
           # Create startup script
           RUN cat > /docker-entrypoint.sh << 'SCRIPT_EOF'
@@ -170,6 +239,7 @@ jobs:
           set -e
           
           echo "Starting registry with pre-loaded images..."
+          echo "Architecture: $(uname -m)"
           echo "Images are available at hub.kubespray.local:5000"
           echo "Use: curl http://hub.kubespray.local:5000/v2/_catalog"
           
@@ -189,8 +259,36 @@ jobs:
         with:
           context: .
           file: ./Dockerfile.images
+          platforms: linux/${{ matrix.arch }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          build-args: |
+            TARGETARCH=${{ matrix.arch }}
+          cache-from: type=gha,scope=images-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=images-${{ matrix.arch }}
+
+  create-images-manifest:
+    needs: build-images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifest
+        run: |
+          # Create manifest for versioned tag
+          docker buildx imagetools create -t \
+            ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGES_IMAGE_NAME }}:${{ env.VERSION_PREFIX }}-${{ env.KUBESPRAY_VERSION }} \
+            ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGES_IMAGE_NAME }}:${{ env.VERSION_PREFIX }}-${{ env.KUBESPRAY_VERSION }}-amd64 \
+            ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGES_IMAGE_NAME }}:${{ env.VERSION_PREFIX }}-${{ env.KUBESPRAY_VERSION }}-arm64
+          
+          # Create manifest for latest tag
+          docker buildx imagetools create -t \
+            ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGES_IMAGE_NAME }}:latest \
+            ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGES_IMAGE_NAME }}:latest-amd64 \
+            ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGES_IMAGE_NAME }}:latest-arm64

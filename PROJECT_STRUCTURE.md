@@ -37,6 +37,7 @@ kubespray-offline/
 ## 目录说明
 
 ### .github/workflows/
+
 包含 GitHub Actions 自动化工作流配置。
 
 - `build-kubespray-offline.yml`: 主要的构建和推送工作流
@@ -45,12 +46,14 @@ kubespray-offline/
   - 推送到 Docker Hub
 
 ### scripts/
+
 包含部署和管理脚本。
 
 - `deploy-offline-files.sh`: 一键部署文件服务器
 - `deploy-offline-registry.sh`: 一键部署镜像仓库（包含证书生成）
 
 ### temp/
+
 包含 Kubespray 依赖的文件和镜像列表。
 
 - `files.list`: 实际的文件下载 URL 列表
@@ -59,6 +62,7 @@ kubespray-offline/
 - `images.list.template`: Kubespray 原始模板（包含变量）
 
 ### examples/
+
 包含配置示例和参考文档。
 
 - `kubespray-offline-config.yml`: 完整的 Kubespray 离线配置示例
@@ -68,6 +72,7 @@ kubespray-offline/
 ### GitHub Actions 工作流
 
 **build-kubespray-offline.yml**
+
 - 触发条件: push 到 main 分支、创建 tag、手动触发
 - 两个并行任务:
   1. `build-files`: 构建文件服务器镜像
@@ -78,11 +83,13 @@ kubespray-offline/
 ### 部署脚本
 
 **deploy-offline-files.sh**
+
 - 启动 nginx 文件服务器
 - 默认端口: 8080
 - 提供文件浏览和下载服务
 
 **deploy-offline-registry.sh**
+
 - 生成自签名证书
 - 配置 /etc/hosts
 - 启动 Docker Registry
@@ -92,6 +99,7 @@ kubespray-offline/
 ### Docker Compose
 
 **docker-compose.yml**
+
 - 定义两个服务: kubespray-files 和 kubespray-registry
 - 配置网络和存储卷
 - 包含健康检查
@@ -100,6 +108,7 @@ kubespray-offline/
 ### Makefile
 
 提供常用命令的快捷方式:
+
 - `make help`: 显示帮助
 - `make deploy`: 部署所有服务
 - `make test`: 测试服务
@@ -147,14 +156,18 @@ kubespray-offline/
 ## 配置文件
 
 ### .env
+
 运行时环境变量配置（从 .env.example 复制）:
+
 - Docker Hub 用户名
 - 版本号
 - 端口配置
 - 证书路径
 
 ### kubespray-offline-config.yml
+
 Kubespray 离线部署配置:
+
 - 文件下载源
 - 镜像仓库地址
 - 镜像映射关系
@@ -163,24 +176,29 @@ Kubespray 离线部署配置:
 ## 数据持久化
 
 ### 文件服务器
+
 - 容器内路径: `/opt/k8s`
 - 可选挂载: `files-data` volume
 
 ### 镜像仓库
+
 - 容器内路径: `/var/lib/registry`
 - 推荐挂载: `registry-data` volume
 
 ### 证书
+
 - 主机路径: `./certs/` 或 `/opt/registry/certs/`
 - 容器路径: `/certs/`
 
 ## 网络配置
 
 ### 端口映射
+
 - 文件服务器: 8080:80
 - 镜像仓库: 5000:5000
 
 ### 域名解析
+
 - 镜像仓库域名: `hub.kubespray.local`
 - 需要在 `/etc/hosts` 中配置
 
@@ -201,10 +219,12 @@ Kubespray 离线部署配置:
 ## 故障排查
 
 ### 日志位置
+
 - 文件服务器: `docker logs kubespray-files`
 - 镜像仓库: `docker logs kubespray-registry`
 
 ### 常见问题
+
 1. 证书问题 → 重新生成证书
 2. 端口冲突 → 修改 .env 中的端口配置
 3. 磁盘空间不足 → 清理旧数据或扩容
@@ -220,6 +240,7 @@ Kubespray 离线部署配置:
 ## 扩展功能
 
 可以考虑添加的功能:
+
 - Web UI 管理界面
 - 镜像使用统计
 - 自动清理过期镜像

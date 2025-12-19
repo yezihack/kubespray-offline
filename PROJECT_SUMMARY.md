@@ -12,10 +12,12 @@
 
 - ✅ 自动构建 `kubespray-files:v0.1.0-2.25.0` 镜像
 - ✅ 自动构建 `kubespray-images:v0.1.0-2.25.0` 镜像
+- ✅ **多架构支持**: linux/amd64 和 linux/arm64
 - ✅ 自动推送到 Docker Hub (hub.docker.io)
+- ✅ 自动创建多架构 manifest
 - ✅ 支持 tag 触发、push 触发和手动触发
-- ✅ 使用 Docker Buildx 优化构建
-- ✅ 启用 GitHub Actions cache
+- ✅ 使用 Docker Buildx 和 QEMU 进行跨架构构建
+- ✅ 启用 GitHub Actions cache（按架构分离）
 
 **触发方式**:
 
@@ -30,8 +32,9 @@
 **功能**:
 
 - ✅ 基于 nginx:1.25.2-alpine
+- ✅ **支持架构**: linux/amd64 和 linux/arm64
 - ✅ 包含所有 Kubernetes 二进制文件
-- ✅ 自动下载 `temp/files.list` 中的所有文件
+- ✅ 自动下载架构特定的文件列表
 - ✅ 提供 HTTP 文件服务 (端口 80)
 - ✅ 支持目录浏览 (autoindex)
 - ✅ 保持原始目录结构
@@ -50,7 +53,7 @@
 
 ```bash
 docker run -d -p 8080:80 --name kubespray-files \
-  <username>/kubespray-files:v0.1.0-2.25.0
+  sgfoot/kubespray-files:v0.1.0-2.25.0
 ```
 
 ### 3. 离线镜像仓库 ✅
@@ -83,7 +86,7 @@ docker run -d -p 5000:5000 --name kubespray-registry \
   -v /opt/registry/certs:/certs \
   -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/hub.kubespray.local.crt \
   -e REGISTRY_HTTP_TLS_KEY=/certs/hub.kubespray.local.key \
-  <username>/kubespray-images:v0.1.0-2.25.0
+  sgfoot/kubespray-images:v0.1.0-2.25.0
 ```
 
 ### 4. 部署脚本 ✅

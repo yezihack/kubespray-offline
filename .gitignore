@@ -4,6 +4,8 @@ Dockerfile.images
 sync-images.sh
 entrypoint.sh
 registry-data/
+registry-data-*/
+
 
 # Environment files
 .env

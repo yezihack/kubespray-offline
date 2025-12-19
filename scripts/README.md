@@ -4,6 +4,40 @@
 
 ## 脚本列表
 
+### 构建脚本
+
+#### build-multiarch-files.sh / build-multiarch-files.ps1
+构建包含多架构文件的镜像（AMD64 + ARM64）。
+
+**使用方法**:
+```bash
+# Linux/macOS
+chmod +x build-multiarch-files.sh
+./build-multiarch-files.sh
+
+# Windows PowerShell
+.\build-multiarch-files.ps1
+```
+
+**环境变量/参数**:
+- `VERSION`: 版本号（默认: v0.1.0-2.25.0）
+- `IMAGE_NAME`: 镜像名称（默认: kubespray-files:$VERSION）
+
+**功能**:
+1. 检查 `temp/files-amd64.list` 和 `temp/files-arm64.list` 是否存在
+2. 生成 Dockerfile，下载所有架构的文件
+3. 构建包含 AMD64 和 ARM64 文件的单一镜像
+4. 验证镜像构建成功
+
+**示例**:
+```bash
+# Linux/macOS
+VERSION=v0.2.0 ./build-multiarch-files.sh
+
+# Windows PowerShell
+.\build-multiarch-files.ps1 -Version "v0.2.0" -ImageName "my-kubespray-files:v0.2.0"
+```
+
 ### Linux/macOS 脚本
 
 #### deploy-offline-files.sh

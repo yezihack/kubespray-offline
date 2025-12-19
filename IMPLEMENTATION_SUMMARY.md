@@ -208,8 +208,9 @@ quay_image_repo: "{{ registry_host }}/k8s/quay.io"
 ## 已知限制
 
 1. **架构支持**
-   - 当前仅支持 amd64/x86_64
-   - 不支持 arm64
+   - ✅ 支持 amd64/x86_64
+   - ✅ 支持 arm64/aarch64
+   - ❌ 不支持其他架构（如 armv7, ppc64le）
 
 2. **镜像大小**
    - 镜像较大，需要足够的存储空间
@@ -221,9 +222,10 @@ quay_image_repo: "{{ registry_host }}/k8s/quay.io"
 
 ## 未来改进方向
 
-1. **多架构支持**
-   - 添加 arm64 支持
-   - 使用 multi-arch 镜像
+1. **更多架构支持**
+   - ✅ arm64 已支持
+   - 考虑添加 armv7 支持
+   - 考虑添加 ppc64le 支持
 
 2. **功能增强**
    - 添加 Web UI

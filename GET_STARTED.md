@@ -44,6 +44,8 @@ git push origin v0.1.0-2.25.0
 
 ## 📦 使用构建好的镜像
 
+> 💡 **多架构支持**: 镜像支持 linux/amd64 和 linux/arm64，Docker 会自动选择匹配你系统架构的镜像。
+
 ### 方式 1: 使用 Docker Compose（推荐）
 
 ```bash
@@ -52,12 +54,21 @@ cp .env.example .env
 # 编辑 .env 文件，设置你的 Docker Hub 用户名
 nano .env
 
-# 2. 启动服务
+# 2. 启动服务（自动选择架构）
 docker-compose up -d
 
 # 3. 验证
 curl http://localhost:8080/k8s/
 curl -k https://hub.kubespray.local:5000/v2/_catalog
+```
+
+**指定架构**（可选）:
+```bash
+# 强制使用 amd64
+docker pull --platform linux/amd64 sgfoot/kubespray-files:v0.1.0-2.25.0
+
+# 强制使用 arm64
+docker pull --platform linux/arm64 sgfoot/kubespray-files:v0.1.0-2.25.0
 ```
 
 ### 方式 2: 使用部署脚本

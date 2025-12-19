@@ -17,14 +17,20 @@ setup: ## 初始化环境
 	@cp .env.example .env
 	@echo "请编辑 .env 文件配置你的参数"
 
-build-files: ## 构建文件服务器镜像
-	@echo "构建文件服务器镜像..."
+build-files: ## 构建文件服务器镜像（多架构支持）
+	@echo "构建文件服务器镜像（包含 AMD64 和 ARM64）..."
 	@cat > Dockerfile.files << 'EOF'\n\
 	FROM nginx:1.25.2-alpine\n\
 	RUN apk add --no-cache wget\n\
 	RUN mkdir -p /opt/k8s/k8s\n\
-	COPY temp/files.list /tmp/files.list\n\
-	RUN cd /opt/k8s && wget -x -P k8s -i /tmp/files.list && rm /tmp/files.list\n\
+	COPY temp/files-amd64.list /tmp/files-amd64.list\n\
+	COPY temp/files-arm64.list /tmp/files-arm64.list\n\
+	RUN cd /opt/k8s && \\\n\
+	    echo "下载 AMD64 架构文件..." && \\\n\
+	    wget -x -P k8s -i /tmp/files-amd64.list && \\\n\
+	    echo "下载 ARM64 架构文件..." && \\\n\
+	    wget -x -P k8s -i /tmp/files-arm64.list && \\\n\
+	    rm /tmp/files-amd64.list /tmp/files-arm64.list\n\
 	RUN cat > /etc/nginx/conf.d/default.conf << 'NGINX_EOF'\n\
 	server {\n\
 	    listen 80 default_server;\n\

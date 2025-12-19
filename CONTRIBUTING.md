@@ -52,7 +52,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-username/kubespray-offline.git
+git clone https://github.com/sgfoot/kubespray-offline.git
 cd kubespray-offline
 
 # 本地测试构建

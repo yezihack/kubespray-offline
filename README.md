@@ -3,12 +3,15 @@
 本项目使用 GitHub Actions 自动构建 Kubespray v2.25.0 的离线部署所需的文件和镜像。
 
 > 🚀 **快速开始**: 查看 [GET_STARTED.md](GET_STARTED.md) 在 5 分钟内完成设置！
-> 
+>
+> 🏗️ **多架构支持**: 查看 [MULTI_ARCH_GUIDE.md](MULTI_ARCH_GUIDE.md) 了解 ARM64 支持！
+>
 > 📚 **文档导航**: 查看 [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) 快速找到你需要的文档！
 
 ## 特性
 
 - ✅ 自动化构建和推送到 Docker Hub
+- ✅ **多架构支持**: linux/amd64 和 linux/arm64
 - ✅ 包含所有 Kubernetes v1.29.10 组件
 - ✅ 支持多种网络插件（Calico, Cilium, Flannel 等）
 - ✅ 一键部署脚本
@@ -21,14 +24,19 @@
 
 包含 Kubernetes 及相关组件的二进制文件，通过 nginx 提供 HTTP 文件服务。
 
-**镜像地址**: `docker.io/<your-username>/kubespray-files:v0.1.0-2.25.0`
+**镜像地址**: `docker.io/sgfoot/kubespray-files:v0.1.0-2.25.0`
+
+**支持架构**:
+
+- linux/amd64 (x86_64)
+- linux/arm64 (aarch64)
 
 **使用方法**:
 
 ```bash
 # 启动文件服务器
 docker run -d -p 8080:80 --name kubespray-files \
-  <your-username>/kubespray-files:v0.1.0-2.25.0
+  sgfoot/kubespray-files:v0.1.0-2.25.0
 
 # 访问文件列表
 curl http://localhost:8080/k8s/
@@ -38,6 +46,7 @@ curl -O http://localhost:8080/k8s/dl.k8s.io/release/v1.29.10/bin/linux/amd64/kub
 ```
 
 **包含的文件**:
+
 - Kubernetes 组件 (kubelet, kubectl, kubeadm)
 - etcd
 - CNI 插件
@@ -49,14 +58,19 @@ curl -O http://localhost:8080/k8s/dl.k8s.io/release/v1.29.10/bin/linux/amd64/kub
 
 包含 Kubernetes 集群所需的所有容器镜像，基于 Docker Registry v3。
 
-**镜像地址**: `docker.io/<your-username>/kubespray-images:v0.1.0-2.25.0`
+**镜像地址**: `docker.io/sgfoot/kubespray-images:v0.1.0-2.25.0`
+
+**支持架构**:
+
+- linux/amd64 (x86_64)
+- linux/arm64 (aarch64)
 
 **使用方法**:
 
 ```bash
 # 启动镜像仓库 (HTTP)
 docker run -d -p 5000:5000 --name kubespray-registry \
-  <your-username>/kubespray-images:v0.1.0-2.25.0
+  sgfoot/kubespray-images:v0.1.0-2.25.0
 
 # 查看镜像列表
 curl http://localhost:5000/v2/_catalog
@@ -83,7 +97,7 @@ docker run -d -p 5000:5000 --name kubespray-registry \
   -v /opt/registry/certs:/certs \
   -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/hub.kubespray.local.crt \
   -e REGISTRY_HTTP_TLS_KEY=/certs/hub.kubespray.local.key \
-  <your-username>/kubespray-images:v0.1.0-2.25.0
+  sgfoot/kubespray-images:v0.1.0-2.25.0
 
 # 配置 hosts
 echo "127.0.0.1 hub.kubespray.local" >> /etc/hosts
@@ -93,6 +107,7 @@ curl https://hub.kubespray.local:5000/v2/_catalog
 ```
 
 **包含的镜像**:
+
 - Kubernetes 核心组件 (kube-apiserver, kube-controller-manager, kube-scheduler, kube-proxy)
 - 网络插件 (Calico, Cilium, Flannel, Weave)
 - DNS (CoreDNS, NodeLocalDNS)
@@ -141,7 +156,8 @@ quay_image_repo: "{{ registry_host }}/k8s/quay.io"
 2. `DOCKERHUB_TOKEN`: Docker Hub 访问令牌
 
 配置方法:
-1. 访问 https://hub.docker.com/settings/security
+
+1. 访问 <https://hub.docker.com/settings/security>
 2. 创建新的 Access Token
 3. 在 GitHub 仓库的 Settings > Secrets and variables > Actions 中添加
 

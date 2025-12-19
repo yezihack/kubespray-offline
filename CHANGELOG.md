@@ -5,6 +5,24 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v0.2.0-2.25.0] - 2024-12-19
+
+### 新增
+
+- **多架构支持**: 添加 linux/arm64 (aarch64) 架构支持
+  - kubespray-files 镜像支持 amd64 和 arm64
+  - kubespray-images 镜像支持 amd64 和 arm64
+  - 自动构建多架构 manifest
+- 创建 arm64 专用文件列表 (temp/files-arm64.list)
+- 使用 QEMU 进行跨架构构建
+- 架构特定的镜像同步
+
+### 改进
+
+- GitHub Actions 工作流使用 matrix 策略并行构建
+- 优化构建缓存，按架构分离
+- 自动创建多架构 manifest，支持自动架构选择
+
 ## [v0.1.0-2.25.0] - 2024-12-19
 
 ### 新增
@@ -65,4 +83,4 @@
 
 ---
 
-[v0.1.0-2.25.0]: https://github.com/your-username/kubespray-offline/releases/tag/v0.1.0-2.25.0
+[v0.1.0-2.25.0]: https://github.com/sgfoot/kubespray-offline/releases/tag/v0.1.0-2.25.0
