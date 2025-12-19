@@ -243,6 +243,40 @@ docker logs kubespray-files
 curl http://192.168.1.100:8080/k8s/dl.k8s.io/release/v1.29.10/bin/linux/amd64/kubectl
 ```
 
+### 镜像仓库启动失败
+
+**问题**: 容器启动失败，提示 "configuration error: open /etc/docker/registry/config.yml: no such file or directory"
+
+**临时解决方案**:
+```bash
+# 创建配置文件
+mkdir -p /opt/registry/config
+cat > /opt/registry/config/config.yml << 'EOF'
+version: 0.1
+log:
+  fields:
+    service: registry
+storage:
+  filesystem:
+    rootdirectory: /var/lib/registry
+http:
+  addr: :5000
+EOF
+
+# 启动容器（挂载配置）
+docker run -d -p 5000:5000 --name kubespray-registry \
+  -v /opt/registry/config/config.yml:/etc/docker/registry/config.yml:ro \
+  sgfoot/kubespray-images:v0.1.0-2.25.0
+```
+
+**推荐**: 使用部署脚本自动处理
+```bash
+./scripts/deploy-offline-registry.sh  # Linux/macOS
+.\scripts\deploy-offline-registry.ps1  # Windows
+```
+
+详细说明: [docs/REGISTRY_FIX.md](docs/REGISTRY_FIX.md)
+
 ### 镜像拉取失败
 
 ```bash
